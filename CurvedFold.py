@@ -29,6 +29,24 @@ m2 = torch.tensor(m2_, requires_grad=False)
 m3 = torch.tensor(m3_, requires_grad=True)
 
 """
+    Target parameters
+"""
+tgt, org_cp = ReadFile.ReadTarget('input/target.txt')
+
+tgtK_, tgtT_, tgtA_ = ReadFile.ReadTargetParam( 'input/target.csv' )
+tgtK = torch.tensor(tgtK_)
+tgtTR = torch.tensor(tgtT_)
+tgtA = torch.tensor(tgtA_)
+tgtX_, tgtT_, tgtN_, tgtB_ = ReadFile.ReadTargetXTNB( 'input/target.csv' )
+tgtX = torch.tensor(tgtX_)
+tgtT = torch.tensor(tgtT_)
+tgtN = torch.tensor(tgtN_)
+tgtB = torch.tensor(tgtB_)
+tgtBetaR_, tgtBetaL_ = ReadFile.ReadTargetRuling( 'input/target.csv' )
+tgtBetaR = torch.tensor(tgtBetaR_)
+tgtBetaL = torch.tensor(tgtBetaL_)
+
+"""
     Basic parameters
 """
 Pcnt = len(P_kv)
