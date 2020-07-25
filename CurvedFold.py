@@ -4,7 +4,7 @@
 """
 import os
 # write the path of this directory 
-os.chdir('*/CurvedFold_py')
+#os.chdir('*/CurvedFold_py')
 import torch
 import csv
 
@@ -21,12 +21,12 @@ import Polygon
 P_kv, P_tr, P_fa, P_k2d = ReadFile.ReadControlPoints('input/P_1.txt')
 m2_, m3_ = ReadFile.Readm2m3('input/m2m3.txt')
 
-P_kv = torch.tensor(P_kv)
-P_tr = torch.tensor(P_tr)
-P_fa = torch.tensor(P_fa)
-P_k2d = torch.tensor(P_k2d)
-m2 = torch.tensor(m2_)
-m3 = torch.tensor(m3_)
+P_kv = torch.tensor(P_kv, requires_grad=True)
+P_tr = torch.tensor(P_tr, requires_grad=True)
+P_fa = torch.tensor(P_fa, requires_grad=True)
+P_k2d = torch.tensor(P_k2d, requires_grad=False)
+m2 = torch.tensor(m2_, requires_grad=False)
+m3 = torch.tensor(m3_, requires_grad=True)
 
 """
     Basic parameters
@@ -57,13 +57,16 @@ sina = torch.sin(fa)
 tana = torch.tan(fa)
 kv = k2d/cosa
 
-X, T, N, B = ReconstructCurve.ReconstructX(kv, tr, m3, dX)
-T, N, B, kv, tr = TNBkt.calcTNBkt(X, dX)
+#X, T, N, B = ReconstructCurve.ReconstructX(kv, tr, m3, dX)
+X, T, N, B = ReconstructCurve.ReconstructX_grad(kv, tr, m3, dX)
+#T, N, B, kv, tr = TNBkt.calcTNBkt(X, dX)
+T, N, B, kv, tr = TNBkt.calcTNBkt_grad(X, dX)
 
 """
     rulings
 """
-da = TNBkt.calcDiffAngle(fa, dX)
+#da = TNBkt.calcDiffAngle(fa, dX)
+da = TNBkt.calcDiffAngle_grad(fa, dX)
 betaR, betaL, cosbR, cosbL, sinbR, sinbL = Ruling.RulingAngle(kv, tr, da, sina)
 RulR, RulL, RulR2d, RulL2d = Ruling.Ruling(T, N, B, T2d, cosa, sina, cosbR, cosbL, sinbR, sinbL)
     

@@ -64,3 +64,42 @@ def ReconstructX( kv, tr, m3, dX ):
         X[i] = X[i-1] + Tave*dX
 
     return X, T, N, B
+
+
+# kv,tr[Xcnt] -> X,T,N,B[Xcnt][3]
+def ReconstructX_grad( kv, tr, m3, dX ):
+    Xlen = kv.size()[0]
+    T=m3[0][:3]
+    N=m3[1][:3]
+    B=m3[2][:3]
+    X=m3[3][:3]
+
+    t = T + kv[0]*dX*N[0]
+    t = t / torch.norm(t, 2) # normalize
+    T = torch.stack([T, t])   
+    n = N -kv[0]*dX*T[0] +tr[0]*dX*B[0]
+    n = n / torch.norm(n, 2) # normalize
+    N = torch.stack([N, n])
+    b = torch.cross(t, n)
+    b = b / torch.norm(b, 2) # normalize
+    B = torch.stack([B, b])    
+
+    for i in range(2,Xlen):
+        t = T[i-2] + 2*kv[i-1]*dX*N[i-1]
+        t = t / torch.norm(t, 2) # normalize
+        T = torch.cat((T, t.view(1,-1)), dim=0)
+        n = N[i-2] -2*kv[i-1]*dX*T[i-1] +2*tr[i-1]*dX*B[i-1]
+        n = n / torch.norm(n, 2) # normalize
+        N = torch.cat((N, n.view(1,-1)), dim=0)
+        b = torch.cross(t, n)
+        b = b / torch.norm(b, 2) # normalize
+        B = torch.cat((B, b.view(1,-1)), dim=0)
+
+    X = X.view(1,-1)
+    for i in range(1,Xlen):
+        Tave = T[i-1] + T[i]
+        Tave = Tave / torch.norm(Tave, 2) # normalize
+        x = X[i-1] + Tave*dX
+        X = torch.cat((X, x.view(1,-1)), dim=0)
+
+    return X, T, N, B
