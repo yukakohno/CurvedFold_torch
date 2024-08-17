@@ -1,4 +1,4 @@
-# CurvedFold_py
+# CurvedFold_torch
 
 This is the simple python version of CurvedFold with only the basic functions to calculate curved folded surfaces from parameters on the 7 control points on a cureved crease.
 
