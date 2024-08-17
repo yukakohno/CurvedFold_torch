@@ -5,7 +5,7 @@
 import os
 # write the path of this directory 
 #os.chdir('*/CurvedFold_py')
-import torch
+import numpy as np
 import csv
 
 import ReadFile 
@@ -21,12 +21,12 @@ import Polygon
 P_kv, P_tr, P_fa, P_k2d = ReadFile.ReadControlPoints('input/P_1.txt')
 m2_, m3_ = ReadFile.Readm2m3('input/m2m3.txt')
 
-P_kv = torch.tensor(P_kv, requires_grad=True)
-P_tr = torch.tensor(P_tr, requires_grad=True)
-P_fa = torch.tensor(P_fa, requires_grad=True)
-P_k2d = torch.tensor(P_k2d, requires_grad=False)
-m2 = torch.tensor(m2_, requires_grad=False)
-m3 = torch.tensor(m3_, requires_grad=True)
+P_kv = np.array(P_kv)
+P_tr = np.array(P_tr)
+P_fa = np.array(P_fa)
+P_k2d = np.array(P_k2d)
+m2 = np.array(m2_)
+m3 = np.array(m3_)
 
 """
     Target parameters
@@ -34,17 +34,17 @@ m3 = torch.tensor(m3_, requires_grad=True)
 tgt, org_cp = ReadFile.ReadTarget('input/target.txt')
 
 tgtK_, tgtT_, tgtA_ = ReadFile.ReadTargetParam( 'input/target.csv' )
-tgtK = torch.tensor(tgtK_)
-tgtTR = torch.tensor(tgtT_)
-tgtA = torch.tensor(tgtA_)
+tgtK = np.array(tgtK_)
+tgtTR = np.array(tgtT_)
+tgtA = np.array(tgtA_)
 tgtX_, tgtT_, tgtN_, tgtB_ = ReadFile.ReadTargetXTNB( 'input/target.csv' )
-tgtX = torch.tensor(tgtX_)
-tgtT = torch.tensor(tgtT_)
-tgtN = torch.tensor(tgtN_)
-tgtB = torch.tensor(tgtB_)
+tgtX = np.array(tgtX_)
+tgtT = np.array(tgtT_)
+tgtN = np.array(tgtN_)
+tgtB = np.array(tgtB_)
 tgtBetaR_, tgtBetaL_ = ReadFile.ReadTargetRuling( 'input/target.csv' )
-tgtBetaR = torch.tensor(tgtBetaR_)
-tgtBetaL = torch.tensor(tgtBetaL_)
+tgtBetaR = np.array(tgtBetaR_)
+tgtBetaL = np.array(tgtBetaL_)
 
 """
     Basic parameters
@@ -52,8 +52,8 @@ tgtBetaL = torch.tensor(tgtBetaL_)
 Pcnt = len(P_kv)
 Xcnt = 40
 dX = 5.0
-#Px = torch.linspace(0, Pcnt-1, Pcnt)
-Xx = torch.linspace(0, Pcnt-1, Xcnt)
+#Px = np.linspace(0, Pcnt-1, Pcnt)
+Xx = np.linspace(0, Pcnt-1, Xcnt)
 spmat, dt = Spline.get_coeff(Xx, Pcnt-1)
 
 """
@@ -70,21 +70,21 @@ T2d, N2d, k2d = TNBkt.calcTNk2d(X2d, dX)
 tr = Spline.interpolate_spline_7(P_tr, spmat, dt)
 fa = Spline.interpolate_spline_7(P_fa, spmat, dt)
 
-cosa = torch.cos(fa)
-sina = torch.sin(fa)
-tana = torch.tan(fa)
+cosa = np.cos(fa)
+sina = np.sin(fa)
+tana = np.tan(fa)
 kv = k2d/cosa
 
-#X, T, N, B = ReconstructCurve.ReconstructX(kv, tr, m3, dX)
-X, T, N, B = ReconstructCurve.ReconstructX_grad(kv, tr, m3, dX)
-#T, N, B, kv, tr = TNBkt.calcTNBkt(X, dX)
-T, N, B, kv, tr = TNBkt.calcTNBkt_grad(X, dX)
+X, T, N, B = ReconstructCurve.ReconstructX(kv, tr, m3, dX)
+#X, T, N, B = ReconstructCurve.ReconstructX_grad(kv, tr, m3, dX)
+T, N, B, kv, tr = TNBkt.calcTNBkt(X, dX)
+#T, N, B, kv, tr = TNBkt.calcTNBkt_grad(X, dX)
 
 """
     rulings
 """
-#da = TNBkt.calcDiffAngle(fa, dX)
-da = TNBkt.calcDiffAngle_grad(fa, dX)
+da = TNBkt.calcDiffAngle(fa, dX)
+#da = TNBkt.calcDiffAngle_grad(fa, dX)
 betaR, betaL, cosbR, cosbL, sinbR, sinbL = Ruling.RulingAngle(kv, tr, da, sina)
 RulR, RulL, RulR2d, RulL2d = Ruling.Ruling(T, N, B, T2d, cosa, sina, cosbR, cosbL, sinbR, sinbL)
     
@@ -98,14 +98,14 @@ header = ["X.x", "X.y", "X.z", "T.x", "T.y", "T.z",
           "betaR", "betaL", "cosbR", "cosbL", "sinbR", "sinbL",
           "RulR.x", "RulR.y", "RulR.z", "RulL.x", "RulL.y", "RulL.z",
           "RulR2d.x", "RulR2d.y", "RulL2d.x", "RulL2d.y"]
-all = torch.cat([X, T, N, B, kv.view(-1,1), tr.view(-1,1),
-                 X2d, T2d, N2d, k2d.view(-1,1),
-                 fa.view(-1,1), da.view(-1,1),
-                 cosa.view(-1,1), sina.view(-1,1), tana.view(-1,1),
-                 betaR.view(-1,1), betaL.view(-1,1),
-                 cosbR.view(-1,1), cosbL.view(-1,1),
-                 sinbR.view(-1,1), sinbL.view(-1,1),
-                 RulR, RulL, RulR2d, RulL2d], dim=1)
+all = np.concatenate([X, T, N, B, kv.reshape(-1,1), tr.reshape(-1,1),
+                 X2d, T2d, N2d, k2d.reshape(-1,1),
+                 fa.reshape(-1,1), da.reshape(-1,1),
+                 cosa.reshape(-1,1), sina.reshape(-1,1), tana.reshape(-1,1),
+                 betaR.reshape(-1,1), betaL.reshape(-1,1),
+                 cosbR.reshape(-1,1), cosbL.reshape(-1,1),
+                 sinbR.reshape(-1,1), sinbL.reshape(-1,1),
+                 RulR, RulL, RulR2d, RulL2d], 1)
 
 path = 'output/result.csv'
 with open(path, 'w', newline="") as f:

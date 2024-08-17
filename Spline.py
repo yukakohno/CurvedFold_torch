@@ -2,16 +2,16 @@
 """
 @author: ykohno
 """
-import torch
+import numpy as np
 
 def get_coeff(Xx, num):
     Xlen = len(Xx)
-    jj = torch.floor(Xx).int() #/ 小数点以下切捨て
-    jj = torch.max(jj, torch.zeros_like(jj))
-    jj = torch.min(jj, torch.zeros_like(jj)+num-1)
-    dt = Xx - jj.float()
+    jj = np.floor(Xx).astype(np.int32) #/ 小数点以下切捨て
+    jj = np.maximum(jj, np.zeros_like(jj))
+    jj = np.minimum(jj, np.zeros_like(jj)+num-1)
+    dt = Xx - jj.astype(np.float32)
     
-    spmat = torch.zeros([Xlen,num])
+    spmat = np.zeros([Xlen,num])
     for i in range(Xlen):
         spmat[i,jj[i]]=1
 
@@ -24,13 +24,13 @@ def interpolate_linear_7(P_val, spmat, dt):
     num = 6
 
     a = P_val
-    b = torch.zeros(Xlen)
+    b = np.zeros(Xlen)
 
     for i in range(num):
         b[i] = a[i+1]-a[i]
 
-    abcd = torch.cat([a.view(-1,1),b.view(-1,1)],dim=1)[:num]
-    coef = torch.matmul(spmat,abcd)
+    abcd = np.concatenate([a.reshape(-1,1),b.reshape(-1,1)],1)[:num]
+    coef = np.matmul(spmat,abcd)
     #a+b*x
     X_val = coef[:,0] + coef[:,1]*dt
     return X_val
@@ -43,10 +43,10 @@ def interpolate_spline_7(P_val, spmat, dt):
     
     # ３次多項式の0次係数(a)を設定
     a = P_val
-    b = torch.zeros(Xlen)
-    c = torch.zeros(Xlen)
-    d = torch.zeros(Xlen)
-    w = torch.zeros(Xlen)
+    b = np.zeros(Xlen)
+    c = np.zeros(Xlen)
+    d = np.zeros(Xlen)
+    w = np.zeros(Xlen)
 
     # ３次多項式の2次係数(c)を計算
     # 連立方程式を解く。
@@ -70,7 +70,7 @@ def interpolate_spline_7(P_val, spmat, dt):
         d[i] = ( c[i+1] - c[i]) / 3.0
         b[i] = a[i+1] - a[i] - c[i] - d[i]
 
-    abcd = torch.cat([a.view(-1,1),b.view(-1,1),c.view(-1,1),d.view(-1,1)],dim=1)[:num]
-    coef = torch.matmul(spmat,abcd)
+    abcd = np.concatenate([a.reshape(-1,1),b.reshape(-1,1),c.reshape(-1,1),d.reshape(-1,1)],1)[:num]
+    coef = np.matmul(spmat,abcd)
     X_val = coef[:,0] + (coef[:,1] + (coef[:,2] + coef[:,3] *dt) *dt) *dt
     return X_val
